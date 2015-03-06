@@ -1,5 +1,6 @@
 package com.hupengcool.discovery;
 
+import com.google.common.base.Preconditions;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
@@ -7,6 +8,7 @@ import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.details.JsonInstanceSerializer;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by hupeng on 2014/9/16.
@@ -15,7 +17,7 @@ public class ServiceRegistrar{
 
     private ServiceDiscovery<InstanceDetails> serviceDiscovery;
     private final CuratorFramework client;
-
+    private AtomicBoolean closed = new AtomicBoolean(false);
 
     public ServiceRegistrar(CuratorFramework client,String basePath) throws Exception {
         this.client = client;
@@ -43,6 +45,7 @@ public class ServiceRegistrar{
     }
 
     public void close() throws IOException {
+        Preconditions.checkState(closed.compareAndSet(false, true), "Registry service already closed...");
         serviceDiscovery.close();
     }
 }

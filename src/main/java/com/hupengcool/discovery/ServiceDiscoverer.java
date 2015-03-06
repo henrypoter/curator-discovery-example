@@ -1,5 +1,6 @@
 package com.hupengcool.discovery;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.curator.framework.CuratorFramework;
@@ -14,6 +15,7 @@ import org.apache.curator.x.discovery.strategies.RandomStrategy;
 import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by hupeng on 2014/9/16.
@@ -22,10 +24,11 @@ public class ServiceDiscoverer {
     private ServiceDiscovery<InstanceDetails> serviceDiscovery;
     private Map<String, ServiceProvider<InstanceDetails>> providers = Maps.newConcurrentMap();
     private List<Closeable> closeableList = Lists.newArrayList();
+    private AtomicBoolean closed = new AtomicBoolean(false);
     private Object lock = new Object();
 
 
-    public ServiceDiscoverer(CuratorFramework client ,String basePath) throws Exception {
+    public ServiceDiscoverer(CuratorFramework client, String basePath) throws Exception {
         JsonInstanceSerializer<InstanceDetails> serializer = new JsonInstanceSerializer<InstanceDetails>(InstanceDetails.class);
         serviceDiscovery = ServiceDiscoveryBuilder.builder(InstanceDetails.class)
                 .client(client)
@@ -54,15 +57,16 @@ public class ServiceDiscoverer {
             }
         }
 
-
         return provider.getInstance();
     }
 
 
-    public synchronized void close() {
-       for (Closeable closeable : closeableList) {
-           CloseableUtils.closeQuietly(closeable);
-       }
+    public void close() {
+        Preconditions.checkState(closed.compareAndSet(false, true), "discovery service already closed...");
+
+        for (Closeable closeable : closeableList) {
+            CloseableUtils.closeQuietly(closeable);
+        }
     }
 
 
