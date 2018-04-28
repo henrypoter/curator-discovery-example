@@ -77,3 +77,14 @@ public class ServerApp {
     	return node;
     }
 }
+
+/**
+ * myservice4 是ServiceInstance的name。
+ * 当注册多个name相同的实例时，会创建多个临时节点，每个节点表示一个实例。
+ * 实例发现的时候，根据name查询服务，当存在某个name的实例存在多个时，根据指定的负载均衡算法获取其中之一。
+ * [zk: localhost:2181(CONNECTED) 1] ls /zuche/proxy2/myservice4
+[c73f91a7-8a60-473c-b975-92b3e3a4a4cc, 81e28ae7-8c49-4924-bc6c-d070ee26cb14, 6442d774-7af5-41b5-98cc-716734f2059a]
+[zk: localhost:2181(CONNECTED) 2] ls /zuche/proxy2/myservice4
+[]
+
+*/
