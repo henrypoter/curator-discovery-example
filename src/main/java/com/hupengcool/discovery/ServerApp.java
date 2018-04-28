@@ -1,12 +1,12 @@
 package com.hupengcool.discovery;
 
+import java.util.Date;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.UriSpec;
-
-import java.util.UUID;
 
 /**
  * Test ServiceRegistrar
@@ -15,28 +15,65 @@ import java.util.UUID;
  */
 public class ServerApp {
 
+	public final static String ZK_HOST_PORT = "127.0.0.1:2181";
+	public final static String ZK_BASE_PATH = "zuche/proxy2";
     public static void main(String[] args) throws Exception {
-        CuratorFramework client = CuratorFrameworkFactory.newClient("127.0.0.1:2181", new ExponentialBackoffRetry(1000, 3));
+        CuratorFramework client = CuratorFrameworkFactory.newClient(ZK_HOST_PORT, new ExponentialBackoffRetry(1000, 3));
         client.start();
-        ServiceRegistrar serviceRegistrar = new ServiceRegistrar(client,"services");
-        ServiceInstance<InstanceDetails> instance1 = ServiceInstance.<InstanceDetails>builder()
-                .name("service1")
+        ServiceRegistor serviceRegistrar = new ServiceRegistor(client,ZK_BASE_PATH);
+        ServiceInstance<ServerNode> instance1 = ServiceInstance.<ServerNode>builder()
+                .name("myservice1")//name建议unique。如果name一样
                 .port(12345)
-                .address("192.168.1.100")
-                .payload(new InstanceDetails(UUID.randomUUID().toString(),"192.168.1.100",12345,"Test.Service1"))
+                .address("192.168.1.160")
+                .payload(buildServerNode("carmapi","192.168.1.101","101"))
                 .uriSpec(new UriSpec("{scheme}://{address}:{port}"))
                 .build();
-        ServiceInstance<InstanceDetails> instance2 = ServiceInstance.<InstanceDetails>builder()
-                .name("service2")
+       
+        
+        ServiceInstance<ServerNode> instance11 = ServiceInstance.<ServerNode>builder()
+                .name("myservice4")//name建议unique。如果name一样
                 .port(12345)
-                .address("192.168.1.100")
-                .payload(new InstanceDetails(UUID.randomUUID().toString(),"192.168.1.100",12345,"Test.Service2"))
+                .address("192.168.1.160")
+                .payload(buildServerNode("carmapi","192.168.1.101","111"))
                 .uriSpec(new UriSpec("{scheme}://{address}:{port}"))
                 .build();
+        ServiceInstance<ServerNode> instance21 = ServiceInstance.<ServerNode>builder()
+                .name("myservice4")//name建议unique。如果name一样
+                .port(12345)
+                .address("192.168.1.160")
+                .payload(buildServerNode("carmapi","192.168.1.102","222"))
+                .uriSpec(new UriSpec("{scheme}://{address}:{port}"))
+                .build();
+        ServiceInstance<ServerNode> instance31 = ServiceInstance.<ServerNode>builder()
+                .name("myservice4")//name建议unique。如果name一样
+                .port(12345)
+                .address("192.168.1.160")
+                .payload(buildServerNode("carmapi","192.168.1.103","333"))
+                .uriSpec(new UriSpec("{scheme}://{address}:{port}"))
+                .build();
+        
         serviceRegistrar.registerService(instance1);
-        serviceRegistrar.registerService(instance2);
+        
+        serviceRegistrar.registerService(instance11);
+        serviceRegistrar.registerService(instance21);
+        serviceRegistrar.registerService(instance31);
+        
+        serviceRegistrar.unregisterService(instance1);
+        
 
-
-        Thread.sleep(Integer.MAX_VALUE);
+        System.out.println("done.");
+        System.out.println(new Date());
+        Thread.sleep(1000*60L);
+        System.out.println(new Date());
+        //当server挂掉后，zk中的实例会自动销毁
+        
+    }
+    
+    private static ServerNode buildServerNode(String name,String address,String version){
+    	ServerNode node = new ServerNode();
+    	node.setAddress(address);
+    	node.setName(name);
+    	node.setVersion(version);
+    	return node;
     }
 }

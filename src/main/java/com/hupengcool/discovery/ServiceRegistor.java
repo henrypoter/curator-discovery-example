@@ -10,19 +10,17 @@ import org.apache.curator.x.discovery.details.JsonInstanceSerializer;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Created by hupeng on 2014/9/16.
- */
-public class ServiceRegistrar{
+ 
+public class ServiceRegistor{
 
-    private ServiceDiscovery<InstanceDetails> serviceDiscovery;
+    private ServiceDiscovery<ServerNode> serviceDiscovery;
     private final CuratorFramework client;
     private AtomicBoolean closed = new AtomicBoolean(false);
 
-    public ServiceRegistrar(CuratorFramework client,String basePath) throws Exception {
+    public ServiceRegistor(CuratorFramework client,String basePath) throws Exception {
         this.client = client;
-        JsonInstanceSerializer<InstanceDetails> serializer = new JsonInstanceSerializer<InstanceDetails>(InstanceDetails.class);
-        serviceDiscovery = ServiceDiscoveryBuilder.builder(InstanceDetails.class)
+        JsonInstanceSerializer<ServerNode> serializer = new JsonInstanceSerializer<ServerNode>(ServerNode.class);
+        serviceDiscovery = ServiceDiscoveryBuilder.builder(ServerNode.class)
                 .client(client)
                 .serializer(serializer)
                 .basePath(basePath)
@@ -30,16 +28,22 @@ public class ServiceRegistrar{
         serviceDiscovery.start();
     }
 
-    public void registerService(ServiceInstance<InstanceDetails> serviceInstance) throws Exception {
-        serviceDiscovery.registerService(serviceInstance);
+    public void registerService(ServiceInstance<ServerNode> serviceInstance) throws Exception {
+    	ServiceInstance<ServerNode> in = serviceDiscovery.queryForInstance(serviceInstance.getName(), serviceInstance.getId());
+        if(in == null){
+        	serviceDiscovery.registerService(serviceInstance);	
+        }else{
+        	serviceDiscovery.updateService(serviceInstance);
+        }
+    	
     }
 
-    public void unregisterService(ServiceInstance<InstanceDetails> serviceInstance) throws Exception {
+    public void unregisterService(ServiceInstance<ServerNode> serviceInstance) throws Exception {
         serviceDiscovery.unregisterService(serviceInstance);
 
     }
 
-    public void updateService(ServiceInstance<InstanceDetails> serviceInstance) throws Exception {
+    public void updateService(ServiceInstance<ServerNode> serviceInstance) throws Exception {
         serviceDiscovery.updateService(serviceInstance);
 
     }
